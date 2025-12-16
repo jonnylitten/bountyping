@@ -148,6 +148,42 @@ def seed_database():
         }), 500
 
 
+@app.route('/api/admin/scrape-hackerone', methods=['POST'])
+def scrape_hackerone():
+    """Scrape HackerOne programs (admin only)"""
+    admin_secret = request.headers.get('X-Admin-Secret')
+    if admin_secret != ADMIN_SECRET or not ADMIN_SECRET:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        from scrapers.hackerone import HackerOneScraper
+
+        logger.info("Starting HackerOne scrape via API")
+        scraper = HackerOneScraper(db)
+        log = scraper.run()
+
+        if log.success:
+            return jsonify({
+                'success': True,
+                'message': 'HackerOne scrape complete',
+                'programs_found': log.programs_found,
+                'programs_new': log.programs_new,
+                'programs_updated': log.programs_updated
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': log.error_message
+            }), 500
+
+    except Exception as e:
+        logger.error(f"HackerOne scrape failed: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.route('/health')
 def health():
     """Health check endpoint"""
