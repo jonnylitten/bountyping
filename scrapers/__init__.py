@@ -1,0 +1,1 @@
+# BountyPing scrapers package
