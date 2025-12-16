@@ -184,6 +184,35 @@ def scrape_hackerone():
         }), 500
 
 
+@app.route('/api/admin/test-scraper', methods=['POST'])
+def test_scraper():
+    """Test scraper dependencies"""
+    admin_secret = request.headers.get('X-Admin-Secret')
+    if admin_secret != ADMIN_SECRET or not ADMIN_SECRET:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        import requests
+        from scrapers.projectdiscovery import ProjectDiscoveryScraper
+
+        # Test direct fetch
+        response = requests.get('https://raw.githubusercontent.com/projectdiscovery/public-bugbounty-programs/main/chaos-bugbounty-list.json', timeout=10)
+        data = response.json()
+
+        return jsonify({
+            'success': True,
+            'requests_works': True,
+            'programs_in_json': len(data.get('programs', [])),
+            'sample_program': data.get('programs', [])[0] if data.get('programs') else None
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'error_type': type(e).__name__
+        }), 500
+
+
 @app.route('/health')
 def health():
     """Health check endpoint"""
