@@ -33,7 +33,7 @@ class HackerOneScraper(BaseScraper):
         while True:
             logger.info(f"Fetching HackerOne page {page}")
 
-            # GraphQL query for directory
+            # GraphQL query for directory (simplified - HackerOne changed their schema)
             query = """
             query DirectoryQuery($cursor: String) {
               teams(
@@ -41,10 +41,7 @@ class HackerOneScraper(BaseScraper):
                 after: $cursor
                 secure_order_by: {started_accepting_at: {_direction: DESC}}
                 where: {
-                  _and: [
-                    {state: {_eq: public_mode}}
-                    {external_program: {_is_null: true}}
-                  ]
+                  state: {_eq: public_mode}
                 }
               ) {
                 pageInfo {
