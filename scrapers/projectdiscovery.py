@@ -65,19 +65,11 @@ class ProjectDiscoveryScraper(BaseScraper):
         bounty_max = None
         vdp_only = False
 
-        bounty = item.get('bounty', '').lower()
-        if 'yes' in bounty or '$' in bounty:
+        bounty = item.get('bounty', False)
+        # bounty is a boolean in the JSON
+        if bounty is True:
             vdp_only = False
-            # Try to extract amounts
-            amounts = re.findall(r'\$(\d+(?:,\d+)*)', bounty)
-            if amounts:
-                amounts = [int(a.replace(',', '')) for a in amounts]
-                if len(amounts) >= 2:
-                    bounty_min = min(amounts)
-                    bounty_max = max(amounts)
-                elif len(amounts) == 1:
-                    bounty_max = amounts[0]
-        elif 'no' in bounty or 'swag' in bounty:
+        elif bounty is False or item.get('swag'):
             vdp_only = True
 
         # Parse domains
