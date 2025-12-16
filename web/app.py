@@ -111,6 +111,43 @@ def get_scrape_logs():
     return jsonify({'logs': logs})
 
 
+@app.route('/api/admin/seed', methods=['POST'])
+def seed_database():
+    """Seed database with ProjectDiscovery data (admin only)"""
+    # Simple admin auth via header
+    admin_secret = request.headers.get('X-Admin-Secret')
+    if admin_secret != ADMIN_SECRET or not ADMIN_SECRET:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        from scrapers.projectdiscovery import ProjectDiscoveryScraper
+
+        logger.info("Starting database seed via API")
+        scraper = ProjectDiscoveryScraper(db)
+        log = scraper.run()
+
+        if log.success:
+            return jsonify({
+                'success': True,
+                'message': 'Database seeded successfully',
+                'programs_found': log.programs_found,
+                'programs_new': log.programs_new,
+                'programs_updated': log.programs_updated
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': log.error_message
+            }), 500
+
+    except Exception as e:
+        logger.error(f"Seed failed: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.route('/health')
 def health():
     """Health check endpoint"""
